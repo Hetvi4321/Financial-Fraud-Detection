@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Fraud Detection Dashboard</title>
+  <meta name="description" content="AI-powered credit card fraud detection dashboard with real-time prediction and model analytics." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Particle Canvas ── -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ── Navigation ── -->
+  <nav id="navbar">
+    <div class="nav-brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="#00f5d4" stroke-width="1.5"/>
+        <path d="M8 14 L14 8 L20 14 L14 20 Z" stroke="#00f5d4" stroke-width="1.5" fill="none"/>
+        <circle cx="14" cy="14" r="3" fill="#00f5d4"/>
+      </svg>
+      <span>FraudShield AI</span>
+    </div>
+    <div class="nav-links">
+      <a href="#overview">Overview</a>
+      <a href="#eda">Analytics</a>
+      <a href="#models">Models</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#predict">Predict</a>
+    </div>
+    <div id="api-status" class="api-badge api-checking">● Connecting...</div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section id="hero">
+    <div class="hero-content">
+      <div class="hero-tag">Machine Learning · Credit Card Fraud Detection</div>
+      <h1 class="hero-title">
+        Detect Fraud<br/>
+        <span class="gradient-text">Before It Happens</span>
+      </h1>
+      <p class="hero-subtitle">
+        Powered by a tuned Random Forest model trained on 284K real transactions
+        with SMOTE oversampling — achieving <strong>83% fraud recall</strong>.
+      </p>
+      <div class="hero-stat-row" id="hero-stats">
+        <div class="hero-stat">
+          <span class="hero-stat-val" data-target="284807" id="stat-total">0</span>
+          <span class="hero-stat-label">Transactions</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val" data-target="492" id="stat-fraud">0</span>
+          <span class="hero-stat-label">Fraud Cases</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val" id="stat-recall">0%</span>
+          <span class="hero-stat-label">Fraud Recall</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="hero-stat-val" id="stat-auc">0.00</span>
+          <span class="hero-stat-label">ROC-AUC</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="#predict" class="btn-primary">Try Live Prediction →</a>
+        <a href="#overview" class="btn-ghost">Explore Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Dataset Overview ── -->
+  <section id="overview">
+    <div class="section-header">
+      <span class="section-tag">Dataset Overview</span>
+      <h2>Understanding the Data</h2>
+      <p>Kaggle Credit Card Fraud Detection dataset — European cardholders, September 2013</p>
+    </div>
+
+    <div class="cards-grid" id="overview-cards">
+      <div class="stat-card accent-cyan">
+        <div class="stat-card-icon">📊</div>
+        <div class="stat-card-body">
+          <div class="stat-card-val" id="ov-total">284,807</div>
+          <div class="stat-card-label">Total Transactions</div>
+          <div class="stat-card-sub">30 features per record</div>
+        </div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-card-icon">🚨</div>
+        <div class="stat-card-body">
+          <div class="stat-card-val" id="ov-fraud">492</div>
+          <div class="stat-card-label">Fraudulent Transactions</div>
+          <div class="stat-card-sub" id="ov-fraud-pct">0.17% of total</div>
+        </div>
+      </div>
+      <div class="stat-card accent-green">
+        <div class="stat-card-icon">✅</div>
+        <div class="stat-card-body">
+          <div class="stat-card-val" id="ov-normal">284,315</div>
+          <div class="stat-card-label">Normal Transactions</div>
+          <div class="stat-card-sub" id="ov-normal-pct">99.83% of total</div>
+        </div>
+      </div>
+      <div class="stat-card accent-purple">
+        <div class="stat-card-icon">💰</div>
+        <div class="stat-card-body">
+          <div class="stat-card-val" id="ov-amount">$88.35</div>
+          <div class="stat-card-label">Avg Transaction Amount</div>
+          <div class="stat-card-sub" id="ov-fraud-amount">Fraud avg: $122.21</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Description -->
+    <div class="glass-card feature-desc">
+      <h3>Feature Description</h3>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <span class="feature-name">Time</span>
+          <span class="feature-desc-text">Seconds elapsed since first transaction</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-name">V1 – V28</span>
+          <span class="feature-desc-text">PCA-transformed anonymized features</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-name">Amount</span>
+          <span class="feature-desc-text">Transaction amount in EUR</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-name">Class</span>
+          <span class="feature-desc-text">0 = Normal, 1 = Fraud (target variable)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EDA Section ── -->
+  <section id="eda">
+    <div class="section-header">
+      <span class="section-tag">Exploratory Data Analysis</span>
+      <h2>Data Insights</h2>
+      <p>Visual exploration of transaction patterns and class imbalance</p>
+    </div>
+
+    <div class="charts-grid">
+      <div class="glass-card chart-card">
+        <h3>Class Distribution</h3>
+        <p class="chart-note">Highly imbalanced — only 0.17% are fraud</p>
+        <div class="chart-container">
+          <canvas id="classDistChart"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <h3>SMOTE Balancing Effect</h3>
+        <p class="chart-note">SMOTE synthesizes minority class to balance dataset</p>
+        <div class="chart-container">
+          <canvas id="smoteChart"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <h3>Transaction Amount Distribution</h3>
+        <p class="chart-note">Fraud vs Normal transaction amount patterns</p>
+        <div class="chart-container">
+          <canvas id="amountChart"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <h3>Amount Statistics by Class</h3>
+        <p class="chart-note">Comparing key amount metrics</p>
+        <div class="chart-container">
+          <canvas id="amountStatsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Observations -->
+    <div class="glass-card observations">
+      <h3>🔍 Key Observations</h3>
+      <div class="obs-grid">
+        <div class="obs-item">
+          <span class="obs-icon">⚖️</span>
+          <strong>Severe Class Imbalance</strong>
+          <p>99.83% normal vs 0.17% fraud — standard accuracy is misleading. Focus on Recall and F1.</p>
+        </div>
+        <div class="obs-item">
+          <span class="obs-icon">💵</span>
+          <strong>Amount Patterns</strong>
+          <p>Fraud transactions (avg $122) trend slightly higher than normal (avg $88). Some outliers exist.</p>
+        </div>
+        <div class="obs-item">
+          <span class="obs-icon">🔬</span>
+          <strong>PCA Features</strong>
+          <p>V1–V28 are anonymized via PCA for privacy. Some Vs show strong discriminating power.</p>
+        </div>
+        <div class="obs-item">
+          <span class="obs-icon">🧬</span>
+          <strong>SMOTE Strategy</strong>
+          <p>Synthetic Minority Oversampling creates 226K fraud samples to balance against 226K normal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Model Comparison ── -->
+  <section id="models">
+    <div class="section-header">
+      <span class="section-tag">Model Evaluation</span>
+      <h2>Model Comparison</h2>
+      <p>Performance metrics across all trained classifiers on the test set</p>
+    </div>
+
+    <div class="glass-card metrics-chart-card">
+      <h3>Recall Comparison (Most Critical Metric)</h3>
+      <p class="chart-note">Higher recall = fewer missed frauds</p>
+      <div class="chart-container" style="max-height:300px">
+        <canvas id="recallChart"></canvas>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <div class="table-header">
+        <h3>Detailed Metrics Table</h3>
+        <div class="table-legend">
+          <span class="legend-best">★ Best Model</span>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="metrics-table" class="metrics-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Precision</th>
+              <th>Recall</th>
+              <th>F1-Score</th>
+              <th>Accuracy</th>
+              <th>ROC-AUC</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody id="metrics-tbody">
+            <tr><td colspan="7" class="table-loading">Loading metrics...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="glass-card model-insights">
+      <h3>💡 Why Random Forest?</h3>
+      <div class="insights-grid">
+        <div class="insight-point">
+          <span class="insight-badge">Threshold 0.4</span>
+          <p>Lowering the decision threshold from 0.5 → 0.4 boosts recall from 76% → 83% at the cost of some precision.</p>
+        </div>
+        <div class="insight-point">
+          <span class="insight-badge">SMOTE Training</span>
+          <p>Training on SMOTE-balanced data (not undersampled) gives best balance between precision and recall.</p>
+        </div>
+        <div class="insight-point">
+          <span class="insight-badge">GridSearchCV</span>
+          <p>Best params: max_depth=10, n_estimators=100. Cross-validated recall: 98.2% on training folds.</p>
+        </div>
+        <div class="insight-point">
+          <span class="insight-badge">ROC-AUC 0.99</span>
+          <p>Near-perfect area under curve means the model ranks frauds well above normal transactions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ML Pipeline ── -->
+  <section id="pipeline">
+    <div class="section-header">
+      <span class="section-tag">Methodology</span>
+      <h2>ML Pipeline</h2>
+      <p>End-to-end pipeline from raw data to deployed model</p>
+    </div>
+
+    <div class="pipeline-track" id="pipeline-steps">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- ── Live Prediction ── -->
+  <section id="predict">
+    <div class="section-header">
+      <span class="section-tag">Live Demo</span>
+      <h2>Real-Time Fraud Prediction</h2>
+      <p>Enter transaction features to get an instant fraud risk assessment</p>
+    </div>
+
+    <div class="predict-layout">
+      <!-- Input Form -->
+      <div class="glass-card predict-form-card">
+        <h3>Transaction Details</h3>
+        <p class="form-hint">Enter values or use the quick-fill presets below</p>
+
+        <div class="preset-btns">
+          <button class="preset-btn" onclick="fillPreset('normal')">📋 Normal Transaction</button>
+          <button class="preset-btn preset-fraud" onclick="fillPreset('fraud')">🚨 Suspicious Transaction</button>
+          <button class="preset-btn preset-clear" onclick="fillPreset('clear')">Clear</button>
+        </div>
+
+        <form id="predict-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="inp-time">Time (seconds)</label>
+              <input type="number" id="inp-time" placeholder="0" step="any" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="inp-amount">Amount (€)</label>
+              <input type="number" id="inp-amount" placeholder="0.00" step="0.01" value="" />
+            </div>
+          </div>
+
+          <div class="v-features-header">
+            <span>PCA Features (V1 – V14)</span>
+            <span class="hint-text">Leave at 0 for average behavior</span>
+          </div>
+          <div class="v-grid" id="v-grid-1">
+            <!-- V1-V14 -->
+          </div>
+
+          <div class="v-features-header">
+            <span>PCA Features (V15 – V28)</span>
+          </div>
+          <div class="v-grid" id="v-grid-2">
+            <!-- V15-V28 -->
+          </div>
+
+          <button type="submit" id="predict-btn" class="btn-predict">
+            <span id="predict-btn-text">🔍 Analyze Transaction</span>
+            <span id="predict-spinner" class="spinner hidden"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Result Panel -->
+      <div class="predict-result-panel">
+        <div class="glass-card result-card" id="result-card">
+          <div class="result-placeholder" id="result-placeholder">
+            <div class="result-icon-placeholder">🛡️</div>
+            <p>Submit a transaction to see<br/>the AI risk assessment</p>
+          </div>
+
+          <div id="result-content" class="hidden">
+            <!-- Gauge -->
+            <div class="gauge-container">
+              <canvas id="gaugeChart" width="280" height="160"></canvas>
+              <div class="gauge-label">
+                <div id="result-prob" class="gauge-prob">0%</div>
+                <div id="result-risk" class="gauge-risk-label">RISK LEVEL</div>
+              </div>
+            </div>
+
+            <!-- Verdict -->
+            <div id="result-verdict" class="result-verdict">
+              <span id="verdict-icon">✅</span>
+              <span id="verdict-text">Transaction appears legitimate</span>
+            </div>
+
+            <!-- Detail rows -->
+            <div class="result-details">
+              <div class="result-detail-row">
+                <span class="detail-label">Fraud Probability</span>
+                <span class="detail-val" id="detail-prob">—</span>
+              </div>
+              <div class="result-detail-row">
+                <span class="detail-label">Risk Level</span>
+                <span class="detail-val" id="detail-risk">—</span>
+              </div>
+              <div class="result-detail-row">
+                <span class="detail-label">Decision Threshold</span>
+                <span class="detail-val">0.40</span>
+              </div>
+              <div class="result-detail-row">
+                <span class="detail-label">Model Used</span>
+                <span class="detail-val">Random Forest (Tuned)</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="result-error" class="hidden result-error">
+            <span>⚠️</span>
+            <p id="result-error-msg">Prediction failed. Is the Flask server running?</p>
+          </div>
+        </div>
+
+        <!-- API Note -->
+        <div class="api-note glass-card">
+          <h4>🔗 API Endpoint</h4>
+          <code class="code-block">POST http://localhost:5000/api/predict</code>
+          <p>Start the backend: <code>python backend/app.py</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-brand">
+        <strong>FraudShield AI</strong>
+        <span>Financial Fraud Detection · Data Science Project</span>
+      </div>
+      <div class="footer-tech">
+        <span class="tech-badge">Python</span>
+        <span class="tech-badge">scikit-learn</span>
+        <span class="tech-badge">Flask</span>
+        <span class="tech-badge">SMOTE</span>
+        <span class="tech-badge">Random Forest</span>
+        <span class="tech-badge">Chart.js</span>
+      </div>
+      <div class="footer-note">
+        Dataset: <a href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud" target="_blank">Kaggle Credit Card Fraud Detection</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

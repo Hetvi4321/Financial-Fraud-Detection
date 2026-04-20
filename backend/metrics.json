@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Logistic Regression",
+    "precision": 0.0531,
+    "recall": 0.8737,
+    "f1_score": 0.1002,
+    "accuracy": 0.9737,
+    "roc_auc": 0.9619
+  },
+  {
+    "name": "Decision Tree",
+    "precision": 0.0783,
+    "recall": 0.7895,
+    "f1_score": 0.1425,
+    "accuracy": 0.9841,
+    "roc_auc": 0.8348
+  },
+  {
+    "name": "Random Forest (Tuned)",
+    "precision": 0.3278,
+    "recall": 0.8316,
+    "f1_score": 0.4702,
+    "accuracy": 0.9969,
+    "roc_auc": 0.9772
+  },
+  {
+    "name": "Isolation Forest",
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "accuracy": 0.9983
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "total_transactions": 283726,
+  "fraud_count": 473,
+  "normal_count": 283253,
+  "fraud_percentage": 0.1667,
+  "normal_percentage": 99.8333,
+  "num_features": 30,
+  "amount_mean": 88.47,
+  "amount_max": 25691.16,
+  "amount_median": 22.0,
+  "fraud_amount_mean": 123.87,
+  "normal_amount_mean": 88.41
+}
